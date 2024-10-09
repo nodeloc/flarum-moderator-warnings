@@ -25,13 +25,13 @@ use Flarum\User\User;
 
 return [
     (new Extend\Frontend('forum'))
-        ->js(__DIR__.'/js/dist/forum.js')
-        ->css(__DIR__.'/resources/less/forum.less'),
+        ->js(__DIR__ . '/js/dist/forum.js')
+        ->css(__DIR__ . '/resources/less/forum.less'),
     (new Extend\Frontend('admin'))
-        ->js(__DIR__.'/js/dist/admin.js')
-        ->css(__DIR__.'/resources/less/admin.less'),
+        ->js(__DIR__ . '/js/dist/admin.js')
+        ->css(__DIR__ . '/resources/less/admin.less'),
 
-    new Extend\Locales(__DIR__.'/resources/locale'),
+    new Extend\Locales(__DIR__ . '/resources/locale'),
 
     (new Extend\Routes('api'))
         ->get('/warnings/{user_id}', 'warnings.index', Controller\ListWarningsController::class)
@@ -43,7 +43,7 @@ return [
         ->hasMany('warnings', Warning::class, 'post_id'),
 
     (new Extend\View())
-        ->namespace('askvortsov-moderator-warnings', __DIR__.'/views'),
+        ->namespace('askvortsov-moderator-warnings', __DIR__ . '/views'),
 
     (new Extend\Notification())
         ->type(WarningBlueprint::class, WarningSerializer::class, ['alert', 'email']),
@@ -90,4 +90,9 @@ return [
 
     (new Extend\ServiceProvider())
         ->register(WarningProvider::class),
+
+    (new Extend\Settings)
+        ->serializeToForum("moderate-warnings.snippet", "moderate-warnings.snippet", function ($value) {
+            return json_decode($value ?? '[]');
+        })
 ];

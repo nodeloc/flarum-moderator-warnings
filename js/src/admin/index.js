@@ -1,8 +1,10 @@
 import app from 'flarum/app';
+import adminPage from './adminPage';
 
 app.initializers.add('askvortsov/flarum-moderator-warnings', () => {
   app.extensionData
     .for('askvortsov-moderator-warnings')
+    .registerPage(adminPage)
     .registerPermission(
       {
         icon: 'fas fa-images',
