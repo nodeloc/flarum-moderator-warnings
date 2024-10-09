@@ -7,7 +7,7 @@ Object.assign(Warnings.prototype, {
   public_comment: Model.attribute('public_comment'),
   private_comment: Model.attribute('private_comment'),
   strikes: Model.attribute('strikes'),
-
+  money : Model.attribute('money'),
   createdAt: Model.attribute('createdAt', Model.transformDate),
   isHidden: computed('hiddenAt', (hiddenAt) => !!hiddenAt),
   hiddenAt: Model.attribute('hiddenAt', Model.transformDate),

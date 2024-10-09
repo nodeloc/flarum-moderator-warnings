@@ -17,5 +17,8 @@
         "format-check": "prettier --check src",
         "analyze": "cross-env ANALYZER=true yarn run build"
     },
-    "prettier": "@flarum/prettier-config"
+    "prettier": "@flarum/prettier-config",
+    "dependencies": {
+        "@askvortsov/flarum-moderator-warnings": "file:"
+    }
 }

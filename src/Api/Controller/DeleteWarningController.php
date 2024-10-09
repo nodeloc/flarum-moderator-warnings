@@ -20,6 +20,9 @@ use Flarum\Notification\NotificationSyncer;
 use Illuminate\Support\Arr;
 use Psr\Http\Message\ServerRequestInterface;
 use Tobscure\JsonApi\Document;
+use Flarum\User\User;
+use Illuminate\Contracts\Events\Dispatcher;
+use Mattoid\MoneyHistory\Event\MoneyHistoryEvent;
 
 class DeleteWarningController extends AbstractCreateController
 {
@@ -29,13 +32,15 @@ class DeleteWarningController extends AbstractCreateController
      * @var NotificationSyncer
      */
     protected $notifications;
+    protected $events;
 
     /**
      * @param NotificationSyncer $notifications
      */
-    public function __construct(NotificationSyncer $notifications)
+    public function __construct(NotificationSyncer $notifications, Dispatcher $events)
     {
         $this->notifications = $notifications;
+        $this->events = $events;
     }
 
     /**
@@ -51,6 +56,14 @@ class DeleteWarningController extends AbstractCreateController
         $warning->delete();
 
         $this->notifications->sync(new WarningBlueprint($warning), []);
+
+        // 更新用户余额并添加到money history
+        $user = User::find($warning->user_id);
+        $user->money = $user->money + $warning->money;
+        $user->save();
+        $source = "DELWARNING";
+        $sourceDesc = "取消警告扣能量";
+        $this->events->dispatch(new MoneyHistoryEvent($user, $warning->money, $source, $sourceDesc));
 
         return $warning;
     }

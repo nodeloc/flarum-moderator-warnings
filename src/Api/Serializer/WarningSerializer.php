@@ -31,6 +31,7 @@ class WarningSerializer extends AbstractSerializer
             'userId' => $warnings->user_id,
             'public_comment' => $this->format($warnings->public_comment),
             'strikes' => $warnings->strikes,
+            'money' => $warnings->money,
             'createdAt' => $this->formatDate($warnings->created_at),
             'hiddenAt' => $this->formatDate($warnings->hidden_at),
         ];

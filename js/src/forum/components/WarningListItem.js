@@ -37,10 +37,12 @@ export default class WarningListItem extends Component {
               ? app.translator.trans('askvortsov-moderator-warnings.forum.warning_list_item.list_item_heading_hidden', {
                   time: humanTime(warning.createdAt()),
                   strikes: warning.strikes() || 0,
+                  money: warning.money() || 0,
                 })
               : app.translator.trans('askvortsov-moderator-warnings.forum.warning_list_item.list_item_heading', {
                   time: humanTime(warning.createdAt()),
                   strikes: warning.strikes() || 0,
+                  money: warning.money() || 0,
                 })}
           </span>
           <hr />

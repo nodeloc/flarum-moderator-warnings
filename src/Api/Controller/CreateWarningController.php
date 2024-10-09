@@ -23,6 +23,10 @@ use Flarum\Post\Post;
 use Illuminate\Support\Carbon;
 use Psr\Http\Message\ServerRequestInterface;
 use Tobscure\JsonApi\Document;
+use Mattoid\MoneyHistory\Event\MoneyHistoryEvent;
+use Illuminate\Contracts\Events\Dispatcher;
+use Flarum\User\User;
+use Nodeloc\Lottery\Lottery;
 
 class CreateWarningController extends AbstractCreateController
 {
@@ -37,12 +41,17 @@ class CreateWarningController extends AbstractCreateController
      */
     protected $translator;
 
+    protected $events;
+
+
     /**
      * @param NotificationSyncer $notifications
      */
-    public function __construct(NotificationSyncer $notifications, Translator $translator)
+    public function __construct(NotificationSyncer $notifications, Translator $translator, Dispatcher $events)
     {
         $this->notifications = $notifications;
+        $this->events = $events;
+
         $this->translator = $translator;
     }
 
@@ -68,6 +77,7 @@ class CreateWarningController extends AbstractCreateController
         $warning->public_comment = Warning::getFormatter()->parse($publicComment, new Post());
         $warning->private_comment = Warning::getFormatter()->parse($requestData['private_comment'], new Post());
         $warning->strikes = $requestData['strikes'];
+        $warning->money = $requestData['money'];
         $warning->created_user_id = $actor->id;
         $warning->created_at = Carbon::now();
 
@@ -83,8 +93,41 @@ class CreateWarningController extends AbstractCreateController
             throw new ValidationException(['message' => $this->translator->trans('askvortsov-moderator-warnings.forum.validation.invalid_strike_count')]);
         }
 
+        if (! $warning->money) {
+            $warning->money = 0;
+        }
+
         $warning->save();
 
+        // 是否移除用户所有的抽奖
+        $isRemoveLottery =  $requestData['isRemoveLottery'];
+        if($isRemoveLottery){
+            // 获取用户ID
+            $userId = $warning->user_id;
+
+            // 找到所有状态为 0 的 lottery
+            $lotteries = Lottery::where('status', 0)->get();
+
+            foreach ($lotteries as $lottery) {
+                // 查找该用户在当前 lottery 中的参与者记录
+                $participant = $lottery->participants()->where('user_id', $userId)->first();
+                if ($participant) {
+                    // 删除参与者记录
+                    $participant->delete();
+                    $lottery->decrement('enter_count');
+                }
+            }
+        }
+
+        // 更新用户余额并添加到money history
+        if($warning->money>0){
+            $user = User::find($warning->user_id);
+            $user->money = $user->money - $warning->money;
+            $user->save();
+            $source = "WARNING";
+            $sourceDesc = "警告扣能量";
+            $this->events->dispatch(new MoneyHistoryEvent($user, -$warning->money, $source, $sourceDesc));
+        }
         $this->notifications->sync(new WarningBlueprint($warning), [$warning->warnedUser]);
 
         return $warning;
