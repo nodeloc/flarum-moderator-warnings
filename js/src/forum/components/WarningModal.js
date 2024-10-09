@@ -3,6 +3,8 @@ import Button from 'flarum/components/Button';
 import username from 'flarum/helpers/username';
 import Stream from 'flarum/utils/Stream';
 import Switch from 'flarum/common/components/Switch';
+import Select from 'flarum/common/components/Select';
+import app from 'flarum/forum/app'
 
 export default class WarningModal extends Modal {
   oninit(vnode) {
@@ -13,6 +15,12 @@ export default class WarningModal extends Modal {
     this.strikes = Stream(0);
     this.money = Stream(0);
     this.isRemoveLottery = Stream(false);
+
+    this.snippets = app.forum.attribute('moderate-warnings.snippet') || {};
+    this.snippetsSelect = {};
+    Object.keys(this.snippets).forEach(key => {
+      this.snippetsSelect[this.snippets[key]] = key;
+    });
   }
 
   className() {
@@ -49,18 +57,10 @@ export default class WarningModal extends Modal {
                 {app.translator.trans('askvortsov-moderator-warnings.forum.warning_modal.public_comment_heading', {
                   username: username(this.attrs.user),
                 })}
-                <select name="select" onchange={e => this.setPublicComment(e.target.value)}>
-                    <option value="none">选择警告内容</option>
-                    <option value="water_warning">水帖警告</option>
-                    <option value="remove_lottery">移除抽奖</option>
-                    <option value="tag_error_warning">标签错误</option>
-                    <option value="verification_warning">鉴证警告</option>
-                    <option value="attack_warning">攻击他人</option>
-                    <option value="uncomfortable_warning">无意义</option>
-                    <option value="notrue_warning">扭曲事实</option>
-                    <option value="ai_warning">AI机器人</option>
-                </select>
               </label>
+              <Select className="FormControl" options={this.snippetsSelect} onchange={this.setPublicCommentFromData.bind(this)}>
+                {app.translator.trans('askvortsov-moderator-warnings.forum.snippet')}
+              </Select>
               <textarea className="FormControl" bidi={this.publicComment} required={true} rows="6" />
             </div>
           </div>
@@ -76,7 +76,7 @@ export default class WarningModal extends Modal {
           </div>
           <div className="Form-group">
             <Switch state={this.isRemoveLottery()} onchange={this.isRemoveLottery}>
-            移除用户所有抽奖？
+              移除用户所有抽奖？
             </Switch>
           </div>
           <div className="Form-group">
@@ -88,36 +88,38 @@ export default class WarningModal extends Modal {
       </div>
     );
   }
-
+  setPublicCommentFromData(data) {
+    this.publicComment(data);
+  }
   setPublicComment(value) {
-    switch(value) {
-        case 'water_warning':
-            this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“恶意水帖”一项，现对你进行警告并扣除相应能量，请自觉遵守相关版规要求参与论坛讨论，感谢你的配合！');
-            break;
-        case 'remove_lottery':
-            this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“恶意水帖”一项，现对你进行警告并扣除相应能量，且你所参与抽奖已被移除，请满足条件后再重新参与！');
-            break;
-        case 'tag_error_warning':
-            this.publicComment('你好，你发布的帖子选择标签错误，管理已为你更改标签，现对你进行警告并扣除相应能量，请在发帖时选择与您帖子内容相关的专业标签，以确保帖子能够得到正确的关注与回复，感谢你的配合！');
-            break;
-        case 'verification_warning':
-            this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“涉政”一项，现对你进行警告并扣除相应能量，请不要讨论部分敏感话题，感谢你的配合！');
-            break;
-        case 'attack_warning':
-            this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“攻击他人或引战”一项，现对你进行警告并扣除相应能量，请心平气和友好交流，维护和谐的论坛环境，感谢你的配合！');
-            break;
-        case 'uncomfortable_warning':
-            this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“发表无意义内容”一项，现对你进行警告并扣除相应能量，请发表高质量内容，互相交流学习，感谢你的配合！');
-            break;
-        case 'notrue_warning':
-            this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“扭曲事实”一项，现对你进行警告并扣除相应能量，网络信息真真假假难以分辨，请仔细辨别内容真实性再发布，感谢你的配合！');
-            break;
-        case 'ai_warning':
-            this.publicComment('你好，你发布的内容疑似机器人或ai发布，现对你进行警告并扣除相应能量，感谢你的配合！！');
-            break;
-        default:
-            this.publicComment('');
-            break;
+    switch (value) {
+      case 'water_warning':
+        this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“恶意水帖”一项，现对你进行警告并扣除相应能量，请自觉遵守相关版规要求参与论坛讨论，感谢你的配合！');
+        break;
+      case 'remove_lottery':
+        this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“恶意水帖”一项，现对你进行警告并扣除相应能量，且你所参与抽奖已被移除，请满足条件后再重新参与！');
+        break;
+      case 'tag_error_warning':
+        this.publicComment('你好，你发布的帖子选择标签错误，管理已为你更改标签，现对你进行警告并扣除相应能量，请在发帖时选择与您帖子内容相关的专业标签，以确保帖子能够得到正确的关注与回复，感谢你的配合！');
+        break;
+      case 'verification_warning':
+        this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“涉政”一项，现对你进行警告并扣除相应能量，请不要讨论部分敏感话题，感谢你的配合！');
+        break;
+      case 'attack_warning':
+        this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“攻击他人或引战”一项，现对你进行警告并扣除相应能量，请心平气和友好交流，维护和谐的论坛环境，感谢你的配合！');
+        break;
+      case 'uncomfortable_warning':
+        this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“发表无意义内容”一项，现对你进行警告并扣除相应能量，请发表高质量内容，互相交流学习，感谢你的配合！');
+        break;
+      case 'notrue_warning':
+        this.publicComment('你好，你发布的内容符合版规【可讨论内容】第一条中“扭曲事实”一项，现对你进行警告并扣除相应能量，网络信息真真假假难以分辨，请仔细辨别内容真实性再发布，感谢你的配合！');
+        break;
+      case 'ai_warning':
+        this.publicComment('你好，你发布的内容疑似机器人或ai发布，现对你进行警告并扣除相应能量，感谢你的配合！！');
+        break;
+      default:
+        this.publicComment('');
+        break;
     }
   }
 
@@ -158,6 +160,6 @@ export default class WarningModal extends Modal {
         ))
       )
       .then(this.attrs.callback)
-      .catch(() => {});
+      .catch(() => { });
   }
 }
